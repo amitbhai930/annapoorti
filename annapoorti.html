@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Annapoorti – Surplus Food to People in Need</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+    <!-- Socket.IO client (v4) -->
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
+
+    <style>
+         :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --muted: #94a3b8;
+            --accent: #22c55e;
+            --accent2: #38bdf8;
+            --danger: #ef4444;
+            --text: #e5e7eb;
+            --soft: #1f2937;
+            --soft2: #0b1220;
+        }
+        
+        * {
+            box-sizing: border-box
+        }
+        
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, var(--soft2), var(--bg));
+            color: var(--text);
+            font: 14px/1.5 system-ui, Segoe UI, Roboto, Helvetica, Arial
+        }
+        
+        a {
+            color: var(--accent2)
+        }
+        
+        button {
+            cursor: pointer
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px
+        }
+        
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: #0b1220;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #1e293b
+        }
+        
+        .brand {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+        
+        .brand .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: radial-gradient(circle at 30% 30%, #34d399, #0ea5e9);
+            box-shadow: 0 0 22px #0ea5e955
+        }
+        
+        .brand h1 {
+            font-size: 18px;
+            margin: 0;
+            letter-spacing: .5px
+        }
+        
+        .auth {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+        
+        .btn {
+            background: var(--accent);
+            color: #062b12;
+            border: 0;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 700
+        }
+        
+        .btn.secondary {
+            background: #1f2937;
+            color: #cbd5e1
+        }
+        
+        .btn.danger {
+            background: var(--danger);
+            color: #fff
+        }
+        
+        .grid {
+            display: grid;
+            gap: 18px
+        }
+        
+        .hero {
+            padding: 40px 20px;
+            background: linear-gradient(120deg, #0b1220, #071327);
+            border-bottom: 1px solid #1e293b
+        }
+        
+        .hero h2 {
+            margin: 0 0 10px;
+            font-size: 28px
+        }
+        
+        .hero p {
+            margin: 0;
+            color: var(--muted)
+        }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            padding: 16px
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px
+        }
+        
+        .tab {
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            color: #cbd5e1
+        }
+        
+        .tab.active {
+            background: #0ea5e933;
+            border-color: #38bdf8;
+            color: #e0f2fe
+        }
+        
+        .two-col {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 16px
+        }
+        
+        @media (max-width:980px) {
+            .two-col {
+                grid-template-columns: 1fr
+            }
+        }
+        
+        label {
+            display: block;
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 6px
+        }
+        
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #0b1220;
+            color: #e5e7eb
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: 2px solid #38bdf8
+        }
+        
+        .row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px
+        }
+        
+        .row3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px
+        }
+        
+        .muted {
+            color: var(--muted)
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid #1f2937;
+            background: #0b1220
+        }
+        
+        .badge.gold {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            color: #2f2000
+        }
+        
+        .badge.silver {
+            background: linear-gradient(90deg, #cbd5e1, #94a3b8);
+            color: #1e293b
+        }
+        
+        .badge.bronze {
+            background: linear-gradient(90deg, #d6b48a, #b7791f);
+            color: #2f2000
+        }
+        
+        .list {
+            display: grid;
+            gap: 10px
+        }
+        
+        .item {
+            padding: 10px;
+            border-radius: 12px;
+            background: #0b1220;
+            border: 1px solid #1f2937
+        }
+        
+        #map {
+            height: 520px;
+            border-radius: 14px;
+            border: 1px solid #1f2937
+        }
+        
+        .footer {
+            padding: 30px 20px;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #1e293b;
+            background: #0b1220;
+            margin-top: 24px
+        }
+        
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .5);
+            z-index: 9999
+        }
+        
+        .auth-card {
+            width: min(900px, 95vw);
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            padding: 18px
+        }
+        
+        .flex {
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+        
+        .hidden {
+            display: none
+        }
+        
+        .pill {
+            padding: 6px 10px;
+            background: #0ea5e91a;
+            border: 1px solid #0ea5e948;
+            border-radius: 999px;
+            font-size: 12px
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px 10px
+        }
+        
+        .table th {
+            color: #9ca3af;
+            font-weight: 600;
+            text-align: left
+        }
+        
+        .table .rowwrap {
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            border-radius: 12px
+        }
+        
+        .notice {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #1a2b3a;
+            border: 1px dashed #224c69;
+            color: #bfe1ff
+        }
+        
+        .divider {
+            height: 1px;
+            background: #1f2937;
+            margin: 12px 0
+        }
+    </style>
+</head>
+
+<body>
+    <header class="nav">
+        <div class="brand">
+            <div class="logo"></div>
+            <h1>Annapoorti</h1>
+            <span class="pill">FSSAI-aware • Good Samaritan</span>
+        </div>
+        <div class="auth">
+            <span id="whoami" class="muted">Guest</span>
+            <span id="sockStatus" class="pill">Socket: <span id="sockState">…</span></span>
+            <button id="btnLogin" class="btn secondary" type="button">Sign up / Log in</button>
+            <button id="btnLogout" class="btn danger hidden" type="button">Logout</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container grid">
+            <h2>Connect surplus food from Hotels & Services to Orphanages and Charities—safely, compliantly, fast.</h2>
+            <p>We digitize FSSAI safety checks, match donations to nearby recipients, and guide volunteers for pickup & delivery. Earn achievements and CSR impact as you reduce food waste.</p>
+            <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+                <div class="card">
+                    <div class="badge gold">🏆 Achievement System</div>
+                    <p class="muted">Hotels unlock Bronze/Silver/Gold badges as they donate more safely handled meals.</p>
+                </div>
+                <div class="card">
+                    <div class="badge silver">📍 Live Map + Routing</div>
+                    <p class="muted">Orphanages/Volunteers discover nearby donations and get driving routes instantly.</p>
+                </div>
+                <div class="card">
+                    <div class="badge bronze">🛡️ FSSAI-style Checklist</div>
+                    <p class="muted">Time–temperature & photo attestation to reduce liability and ensure safe redistribution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container grid" style="margin-top:18px">
+        <div class="tabs">
+            <button class="tab active" id="tabHotels" type="button">Hotel dashboard</button>
+            <button class="tab" id="tabRecipients" type="button">Orphanage / Volunteer</button>
+            <button class="tab" id="tabLeaderboard" type="button">Achievements & Leaderboard</button>
+        </div>
+
+        <!-- HOTEL PANEL -->
+        <section id="panelHotels" class="grid">
+            <div class="two-col">
+                <div class="card">
+                    <h3>Post leftover food (Hotel)</h3>
+                    <p class="muted">Fill the FSSAI-style safety card. Geocode uses Nominatim (or enter lat/lng manually).</p>
+                    <div class="divider"></div>
+                    <form id="formDonation" class="grid" onsubmit="return false;">
+                        <div class="row">
+                            <div><label>Hotel Name</label><input id="hotelName" placeholder="Hotel Mapple, Ramgarh" required /></div>
+                            <div><label>Contact Phone</label><input id="hotelPhone" placeholder="+91 9xxxxxxxxx" /></div>
+                        </div>
+                        <div class="row3">
+                            <div>
+                                <label>Food Type</label>
+                                <select id="foodType">
+                  <option>Bread/Roti</option><option>Cooked Rice</option><option>Dal/Gravy</option>
+                  <option>Vegetables</option><option>Dessert</option><option>Other</option>
+                </select>
+                            </div>
+                            <div><label>Servings (approx)</label><input id="qty" type="number" min="1" value="20" /></div>
+                            <div><label>Best before (hours)</label><input id="bestBefore" type="number" min="1" value="4" /></div>
+                        </div>
+
+                        <div class="row">
+                            <div><label>Food temperature at handover (°C)</label><input id="temp" type="number" placeholder="e.g., 65 for hot / 5 for cold" /></div>
+                            <div><label>Photo URL (optional)</label><input id="photoUrl" placeholder="https://..." /></div>
+                        </div>
+
+                        <div class="row">
+                            <div><label>Address (or place)</label><input id="address" placeholder="Type address, then click Geocode" /></div>
+                            <div class="flex" style="align-items:flex-end;gap:10px">
+                                <div style="flex:1"><label>Latitude</label><input id="lat" placeholder="12.9716" /></div>
+                                <div style="flex:1"><label>Longitude</label><input id="lng" placeholder="77.5946" /></div>
+                                <button id="btnGeocode" class="btn secondary" type="button">Geocode</button>
+                            </div>
+                        </div>
+
+                        <div class="notice">
+                            <strong>Safety attestation:</strong> I confirm this food was prepared hygienically, kept within safe time & temperature limits, and is fit for human consumption in line with FSSAI guidelines.
+                        </div>
+
+                        <div class="flex">
+                            <button id="btnPost" class="btn" type="button">Post Donation</button>
+                            <span class="muted" id="postMsg" style="margin-left:auto"></span>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Your recent donations</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Food</th>
+                                <th>Qty</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblHotelDonations"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- RECIPIENT / VOLUNTEER PANEL -->
+        <section id="panelRecipients" class="grid hidden">
+            <div class="two-col">
+                <div class="card">
+                    <h3>Discover donations near you</h3>
+                    <div class="row">
+                        <div><label>Your location (lat,lng)</label><input id="meCoords" placeholder="12.9352,77.6245" /></div>
+                        <div class="flex"><button id="btnLocate" class="btn secondary" type="button">Use my browser location</button><button id="btnRefresh" class="btn" type="button">Refresh</button></div>
+                    </div>
+                    <div id="map"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Available donations</h3>
+                    <div id="listDonations" class="list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACHIEVEMENTS PANEL -->
+        <section id="panelLeaderboard" class="grid hidden">
+            <div class="two-col">
+                <div class="card">
+                    <h3>Hotel Achievements</h3>
+                    <p class="muted">Donate more safely handled meals to unlock badges.</p>
+                    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+                        <div class="card">
+                            <div class="badge bronze">🥉 Bronze</div>
+                            <p class="muted">1+ donations</p>
+                        </div>
+                        <div class="card">
+                            <div class="badge silver">🥈 Silver</div>
+                            <p class="muted">5+ donations</p>
+                        </div>
+                        <div class="card">
+                            <div class="badge gold">🥇 Gold</div>
+                            <p class="muted">20+ donations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Leaderboard</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Hotel</th>
+                                <th>Donations</th>
+                                <th>Badge</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblLeaderboard"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        Built for demo purposes. Map: © OpenStreetMap contributors. Routing: OSRM. This prototype stores only local demo data (localStorage).
+    </footer>
+
+    <!-- AUTH MODAL -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-card">
+            <div class="flex" style="justify-content:space-between">
+                <h3>Sign up / Log in</h3>
+                <button class="btn secondary" id="authClose" type="button">✕</button>
+            </div>
+            <p class="muted">Demo only: users & sessions are saved in your browser’s localStorage.</p>
+            <div class="two-col">
+                <div class="card">
+                    <h4>Create account</h4>
+                    <form id="formSignup" onsubmit="return false;">
+                        <div class="row">
+                            <div><label>Name</label><input id="suName" required /></div>
+                            <div>
+                                <label>Role</label>
+                                <select id="suRole">
+                  <option value="hotel">Hotel</option>
+                  <option value="recipient">Orphanage/Charity</option>
+                  <option value="volunteer">Volunteer</option>
+                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div><label>Email</label><input id="suEmail" type="email" required /></div>
+                            <div><label>Password</label><input id="suPass" type="password" required /></div>
+                        </div>
+                        <button id="btnSignup" class="btn" type="button">Sign up</button>
+                        <span id="suMsg" class="muted"></span>
+                    </form>
+                </div>
+                <div class="card">
+                    <h4>Log in</h4>
+                    <form id="formLogin" onsubmit="return false;">
+                        <div class="row">
+                            <div><label>Email</label><input id="liEmail" type="email" required /></div>
+                            <div><label>Password</label><input id="liPass" type="password" required /></div>
+                        </div>
+                        <button id="btnDoLogin" class="btn" type="button">Log in</button>
+                        <span id="liMsg" class="muted"></span>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            // ---------- Helpers ----------
+            function $(sel) {
+                return document.querySelector(sel);
+            }
+
+            function $on(el, evt, fn) {
+                if (el) {
+                    el.addEventListener(evt, fn);
+                }
+            }
+
+            // Safari-safe localStorage wrapper
+            const storage = {
+                get: function(k, def) {
+                    try {
+                        var raw = localStorage.getItem(k);
+                        var val = raw !== null ? JSON.parse(raw) : null;
+                        return (val === null || typeof val === 'undefined') ? def : val;
+                    } catch (e) {
+                        return def;
+                    }
+                },
+                set: function(k, v) {
+                    try {
+                        localStorage.setItem(k, JSON.stringify(v));
+                    } catch (e) {}
+                }
+            };
+
+            const DB = {
+                users: storage.get('users', []),
+                session: storage.get('session', null),
+                donations: storage.get('donations', []),
+            };
+
+            function saveDB() {
+                storage.set('users', DB.users);
+                storage.set('session', DB.session);
+                storage.set('donations', DB.donations);
+                renderAll();
+            }
+
+            function badgeForCount(n) {
+                if (n >= 20) return '🥇 Gold';
+                if (n >= 5) return '🥈 Silver';
+                if (n >= 1) return '🥉 Bronze';
+                return '—';
+            }
+
+            // ---------- Auth ----------
+            var authModal = $('#authModal');
+
+            function openAuth() {
+                authModal.style.display = 'flex';
+                setTimeout(function() {
+                    var x = $('#suName');
+                    if (x) {
+                        x.focus();
+                    }
+                }, 0);
+            }
+
+            function closeAuth() {
+                authModal.style.display = 'none';
+            }
+
+            function currentUser() {
+                if (!DB.session) return null;
+                for (var i = 0; i < DB.users.length; i++) {
+                    if (DB.users[i].email === DB.session.email) return DB.users[i];
+                }
+                return null;
+            }
+
+            function signup() {
+                var form = $('#formSignup');
+                if (!form || !form.reportValidity()) return;
+                var name = $('#suName').value.trim();
+                var role = $('#suRole').value;
+                var email = $('#suEmail').value.trim().toLowerCase();
+                var pass = $('#suPass').value;
+                var okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                if (!okEmail) {
+                    $('#suMsg').textContent = 'Please enter a valid email.';
+                    return;
+                }
+                if (pass.length < 3) {
+                    $('#suMsg').textContent = 'Password must be at least 3 characters.';
+                    return;
+                }
+                for (var i = 0; i < DB.users.length; i++) {
+                    if (DB.users[i].email === email) {
+                        $('#suMsg').textContent = 'User already exists. Please log in.';
+                        return;
+                    }
+                }
+                DB.users.push({
+                    name: name,
+                    role: role,
+                    email: email,
+                    pass: pass
+                });
+                DB.session = {
+                    email: email
+                };
+                $('#suMsg').textContent = 'Account created. Logged in.';
+                saveDB();
+                closeAuth();
+            }
+
+            function login() {
+                var form = $('#formLogin');
+                if (!form || !form.reportValidity()) return;
+                var email = $('#liEmail').value.trim().toLowerCase();
+                var pass = $('#liPass').value;
+                var u = null;
+                for (var i = 0; i < DB.users.length; i++) {
+                    if (DB.users[i].email === email && DB.users[i].pass === pass) {
+                        u = DB.users[i];
+                        break;
+                    }
+                }
+                $('#liMsg').textContent = u ? 'Logged in.' : 'Invalid credentials.';
+                if (u) {
+                    DB.session = {
+                        email: email
+                    };
+                    saveDB();
+                    closeAuth();
+                }
+            }
+
+            function logout() {
+                DB.session = null;
+                saveDB();
+            }
+
+            // ---------- Tabs ----------
+            function showTab(tab) {
+                $('#panelHotels').classList.add('hidden');
+                $('#panelRecipients').classList.add('hidden');
+                $('#panelLeaderboard').classList.add('hidden');
+                $('#tabHotels').classList.remove('active');
+                $('#tabRecipients').classList.remove('active');
+                $('#tabLeaderboard').classList.remove('active');
+                if (tab === 'hotels') {
+                    $('#panelHotels').classList.remove('hidden');
+                    $('#tabHotels').classList.add('active');
+                }
+                if (tab === 'recip') {
+                    $('#panelRecipients').classList.remove('hidden');
+                    $('#tabRecipients').classList.add('active');
+                    initMap();
+                    renderDonationList();
+                    addMarkers();
+                    if (!myLatLng && navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function(pos) {
+                            myLatLng = [pos.coords.latitude, pos.coords.longitude];
+                            $('#meCoords').value = myLatLng.join(',');
+                            addMarkers();
+                            map.setView(myLatLng, 14);
+                        }, function() {});
+                    }
+                }
+                if (tab === 'lead') {
+                    $('#panelLeaderboard').classList.remove('hidden');
+                    $('#tabLeaderboard').classList.add('active');
+                }
+            }
+
+            // ---------- Geocode ----------
+            async function geocodeAddress(addr) {
+                var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr) + '&limit=1';
+                var res = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) throw new Error('Geocode HTTP ' + res.status);
+                var data = await res.json();
+                if (data && data[0]) return {
+                    lat: +data[0].lat,
+                    lng: +data[0].lon
+                };
+                throw new Error('No result');
+            }
+
+            // ---------- Hotel posting ----------
+            function postDonation() {
+                var me = currentUser();
+                if (!me || me.role !== 'hotel') {
+                    $('#postMsg').textContent = 'Login as Hotel to post.';
+                    return;
+                }
+                var payload = {
+                    id: 'D' + Date.now(),
+                    hotelEmail: me.email,
+                    hotelName: $('#hotelName').value.trim() || me.name,
+                    phone: $('#hotelPhone').value.trim(),
+                    type: $('#foodType').value,
+                    qty: +$('#qty').value || 0,
+                    bestBefore: +$('#bestBefore').value || 0,
+                    temp: $('#temp').value ? +$('#temp').value : null,
+                    photoUrl: $('#photoUrl').value.trim() || '',
+                    address: $('#address').value.trim(),
+                    lat: $('#lat').value ? +$('#lat').value : null,
+                    lng: $('#lng').value ? +$('#lng').value : null,
+                    status: 'posted',
+                    createdAt: new Date().toISOString(),
+                    claimedBy: null
+                };
+                if (!payload.lat || !payload.lng) {
+                    $('#postMsg').textContent = 'Need lat/lng (use Geocode or enter manually).';
+                    return;
+                }
+                DB.donations.unshift(payload);
+                $('#postMsg').textContent = 'Donation posted!';
+                saveDB();
+            }
+
+            function renderHotelTable() {
+                var me = currentUser();
+                var rows = DB.donations.filter(function(d) {
+                        return !me || d.hotelEmail === me.email;
+                    })
+                    .map(function(d) {
+                        return '<tr class="rowwrap"><td>' + new Date(d.createdAt).toLocaleString() + '</td><td>' + d.type + '</td><td>' + d.qty +
+                            '</td><td>' + d.status + '</td></tr>';
+                    }).join('');
+                $('#tblHotelDonations').innerHTML = rows || '<tr class="rowwrap"><td colspan="4" class="muted">No donations yet.</td></tr>';
+            }
+
+            // ---------- Recipient / Volunteer ----------
+            var map, donorIcon, recipIcon, driverIcon;
+            var routeLine = null;
+            var myLatLng = null;
+
+            function initMap() {
+                if (map) return;
+                map = L.map('map').setView([20.5937, 78.9629], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+                donorIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    shadowSize: [41, 41]
+                });
+                recipIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    shadowSize: [41, 41]
+                });
+                driverIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    shadowSize: [41, 41]
+                });
+            }
+
+            function renderDonationList() {
+                var box = $('#listDonations');
+                var items = DB.donations.map(function(d) {
+                    var claimerName = (d.claimedBy && d.claimedBy.name) ? d.claimedBy.name : 'you';
+                    var btns = (d.status === 'posted') ?
+                        '<button class="btn" type="button" onclick="claimDonation(\'' + d.id + '\')">Claim</button>' :
+                        (d.status === 'claimed' ?
+                            '<span class="pill">Claimed by ' + claimerName + '</span> <button class="btn secondary" type="button" onclick="markPicked(\'' + d.id + '\')">Picked up</button>' :
+                            (d.status === 'picked' ?
+                                '<button class="btn" type="button" onclick="markDelivered(\'' + d.id + '\')">Delivered</button>' :
+                                '<span class="pill">Delivered ✅</span>'));
+                    var tempText = (d.temp !== null && typeof d.temp !== 'undefined') ? d.temp : '—';
+                    return '<div class="item">' +
+                        '<div class="flex" style="justify-content:space-between"><strong>' + d.type + '</strong><span class="muted">' + new Date(d.createdAt).toLocaleString() + '</span></div>' +
+                        '<div class="muted">Servings: ' + d.qty + ' • Best before ' + d.bestBefore + 'h • Temp: ' + tempText + '°C</div>' +
+                        '<div class="muted">From: ' + (d.hotelName || d.hotelEmail) + ' • ' + (d.address || '') + '</div>' +
+                        '<div class="flex" style="gap:10px;margin-top:8px">' +
+                        '<button class="btn secondary" type="button" onclick="focusDonation(\'' + d.id + '\')">Show on map</button>' +
+                        '<button class="btn secondary" type="button" onclick="routeTo(\'' + d.id + '\')">Route</button>' + btns +
+                        '</div></div>';
+                }).join('');
+                box.innerHTML = items || '<div class="item">No donations yet. Ask hotels to post!</div>';
+            }
+
+            function addMarkers() {
+                if (!map) return;
+                map.eachLayer(function(l) {
+                    if (!(l instanceof L.TileLayer)) map.removeLayer(l);
+                });
+                DB.donations.forEach(function(d) {
+                    if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) return;
+                    var icon = d.status === 'delivered' ? recipIcon : donorIcon;
+                    var html = d.photoUrl ?
+                        '<div style="display:grid;gap:6px"><img src="' + d.photoUrl + '" style="width:180px;border-radius:8px"/><div><b>' + d.type + '</b> • ' + d.qty + ' servings</div><small>' + (d.address || '') + '</small></div>' :
+                        '<b>' + d.type + '</b><br/>Servings: ' + d.qty + '<br/><small>' + (d.address || '') + '</small>';
+                    L.marker([d.lat, d.lng], {
+                        icon: icon
+                    }).addTo(map).bindPopup(html);
+                });
+                if (myLatLng) {
+                    L.marker(myLatLng, {
+                        icon: driverIcon
+                    }).addTo(map).bindPopup('You are here');
+                }
+                if (routeLine) {
+                    routeLine.addTo(map);
+                }
+            }
+
+            function focusDonation(id) {
+                var d = null;
+                for (var i = 0; i < DB.donations.length; i++) {
+                    if (DB.donations[i].id === id) {
+                        d = DB.donations[i];
+                        break;
+                    }
+                }
+                if (!d || !map) return;
+                if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) return;
+                map.setView([d.lat, d.lng], 15);
+            }
+
+            async function routeTo(id) {
+                var d = null;
+                for (var i = 0; i < DB.donations.length; i++) {
+                    if (DB.donations[i].id === id) {
+                        d = DB.donations[i];
+                        break;
+                    }
+                }
+                if (!d || !map) return;
+                if (!myLatLng) {
+                    alert('Set your location first (top of this panel).');
+                    return;
+                }
+                if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) {
+                    alert('Donation location missing.');
+                    return;
+                }
+                try {
+                    var url = 'https://router.project-osrm.org/route/v1/driving/' + myLatLng[1] + ',' + myLatLng[0] + ';' + d.lng + ',' + d.lat + '?overview=full&geometries=geojson';
+                    var r = await fetch(url);
+                    if (!r.ok) throw new Error('Route HTTP ' + r.status);
+                    var j = await r.json();
+                    if (j.routes && j.routes[0]) {
+                        var coords = j.routes[0].geometry.coordinates.map(function(c) {
+                            return [c[1], c[0]];
+                        });
+                        if (routeLine) {
+                            map.removeLayer(routeLine);
+                        }
+                        routeLine = L.polyline(coords, {
+                            color: '#38bdf8'
+                        }).addTo(map);
+                        map.fitBounds(routeLine.getBounds(), {
+                            padding: [20, 20]
+                        });
+                    } else {
+                        alert('No route found.');
+                    }
+                } catch (err) {
+                    alert('Routing failed. Please run via HTTP (Live Server), not file://');
+                }
+            }
+
+            function setMyLocationFromInput() {
+                var v = $('#meCoords').value.trim();
+                if (v.indexOf(',') === -1) return alert('Enter as "lat,lng"');
+                var parts = v.split(',');
+                var lat = parseFloat(parts[0]);
+                var lng = parseFloat(parts[1]);
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    myLatLng = [lat, lng];
+                    addMarkers();
+                    map.setView(myLatLng, 13);
+                } else alert('Invalid numbers');
+            }
+
+            function setBrowserLocation() {
+                if (!navigator.geolocation) return alert('Geolocation not supported.');
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    myLatLng = [pos.coords.latitude, pos.coords.longitude];
+                    $('#meCoords').value = myLatLng.join(',');
+                    addMarkers();
+                    map.setView(myLatLng, 14);
+                }, function(err) {
+                    alert('Location error: ' + err.message);
+                });
+            }
+
+            function claimDonation(id) {
+                var me = currentUser();
+                if (!me || (me.role !== 'recipient' && me.role !== 'volunteer')) {
+                    alert('Login as Orphanage/Volunteer to claim.');
+                    return;
+                }
+                var d = null;
+                for (var i = 0; i < DB.donations.length; i++) {
+                    if (DB.donations[i].id === id) {
+                        d = DB.donations[i];
+                        break;
+                    }
+                }
+                if (!d || d.status !== 'posted') {
+                    return;
+                }
+                d.status = 'claimed';
+                d.claimedBy = {
+                    email: me.email,
+                    name: me.name
+                };
+                saveDB();
+            }
+
+            function markPicked(id) {
+                var me = currentUser();
+                var d = null;
+                for (var i = 0; i < DB.donations.length; i++) {
+                    if (DB.donations[i].id === id) {
+                        d = DB.donations[i];
+                        break;
+                    }
+                }
+                if (!d || d.status !== 'claimed') return;
+                if (!d.claimedBy || d.claimedBy.email !== me.email) {
+                    alert('Only the claimer can update.');
+                    return;
+                }
+                d.status = 'picked';
+                saveDB();
+            }
+
+            function markDelivered(id) {
+                var me = currentUser();
+                var d = null;
+                for (var i = 0; i < DB.donations.length; i++) {
+                    if (DB.donations[i].id === id) {
+                        d = DB.donations[i];
+                        break;
+                    }
+                }
+                if (!d || d.status !== 'picked') return;
+                if (!d.claimedBy || d.claimedBy.email !== me.email) {
+                    alert('Only the claimer can update.');
+                    return;
+                }
+                d.status = 'delivered';
+                saveDB();
+            }
+
+            function renderLeaderboard() {
+                var counts = {};
+                DB.donations.forEach(function(d) {
+                    if (!d.hotelEmail) return;
+                    if (!counts[d.hotelEmail]) counts[d.hotelEmail] = {
+                        hotel: (d.hotelName || d.hotelEmail),
+                        n: 0
+                    };
+                    if (d.status === 'delivered') counts[d.hotelEmail].n++;
+                });
+                var rows = Object.keys(counts).map(function(k) {
+                        return counts[k];
+                    })
+                    .sort(function(a, b) {
+                        return b.n - a.n;
+                    })
+                    .map(function(h) {
+                        return '<tr class="rowwrap"><td>' + h.hotel + '</td><td>' + h.n + '</td><td>' + badgeForCount(h.n) + '</td></tr>';
+                    })
+                    .join('');
+                $('#tblLeaderboard').innerHTML = rows || '<tr class="rowwrap"><td colspan="3" class="muted">No results yet.</td></tr>';
+            }
+
+            function renderHeader() {
+                var me = currentUser();
+                $('#whoami').textContent = me ? (me.name + ' (' + me.role + ')') : 'Guest';
+                $('#btnLogin').classList.toggle('hidden', !!me);
+                $('#btnLogout').classList.toggle('hidden', !me);
+            }
+
+            function renderAll() {
+                renderHeader();
+                renderHotelTable();
+                renderDonationList();
+                renderLeaderboard();
+                if (map) addMarkers();
+            }
+
+            // ---------- Events ----------
+            $on($('#btnLogin'), 'click', openAuth);
+            $on($('#authClose'), 'click', closeAuth);
+            $on($('#btnLogout'), 'click', logout);
+            $on($('#btnSignup'), 'click', signup);
+            $on($('#btnDoLogin'), 'click', login);
+            $on($('#formSignup'), 'submit', function(e) {
+                e.preventDefault();
+                signup();
+            });
+            $on($('#formLogin'), 'submit', function(e) {
+                e.preventDefault();
+                login();
+            });
+
+            $on($('#tabHotels'), 'click', function() {
+                showTab('hotels');
+            });
+            $on($('#tabRecipients'), 'click', function() {
+                showTab('recip');
+            });
+            $on($('#tabLeaderboard'), 'click', function() {
+                showTab('lead');
+            });
+
+            $on($('#btnGeocode'), 'click', async function() {
+                var addr = $('#address').value.trim();
+                if (!addr) return;
+                var btn = $('#btnGeocode');
+                btn.disabled = true;
+                var orig = btn.textContent;
+                btn.textContent = 'Geocoding...';
+                try {
+                    var p = await geocodeAddress(addr);
+                    $('#lat').value = p.lat.toFixed(6);
+                    $('#lng').value = p.lng.toFixed(6);
+                } catch (e) {
+                    alert('Geocode failed (use lat/lng). Make sure you run via HTTP/Live Server.');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = orig;
+                }
+            });
+
+            $on($('#btnPost'), 'click', postDonation);
+            $on($('#btnLocate'), 'click', setBrowserLocation);
+            $on($('#btnRefresh'), 'click', function() {
+                renderDonationList();
+                addMarkers();
+            });
+            $on($('#meCoords'), 'change', setMyLocationFromInput);
+            $on($('#meCoords'), 'keyup', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    setMyLocationFromInput();
+                }
+            });
+
+            // ---------- Seed demo data once ----------
+            if (DB.users.length === 0) {
+                DB.users.push({
+                    name: 'Hotel Sunrise',
+                    role: 'hotel',
+                    email: 'sunrise@hotel.in',
+                    pass: 'demo'
+                });
+                DB.users.push({
+                    name: 'Shishu Sadan Orphanage',
+                    role: 'recipient',
+                    email: 'sadan@ngo.in',
+                    pass: 'demo'
+                });
+            }
+            if (DB.donations.length === 0) {
+                DB.donations.push({
+                    id: 'DSEED1',
+                    hotelEmail: 'sunrise@hotel.in',
+                    hotelName: 'Hotel Sunrise',
+                    phone: '+91 90000 00000',
+                    type: 'Cooked Rice',
+                    qty: 40,
+                    bestBefore: 4,
+                    temp: 65,
+                    photoUrl: '',
+                    address: 'MG Road, Bengaluru',
+                    lat: 12.971599,
+                    lng: 77.594566,
+                    status: 'posted',
+                    createdAt: new Date().toISOString(),
+                    claimedBy: null
+                });
+            }
+
+            renderAll();
+
+            // ---------- Socket.IO (to http://localhost:4000) ----------
+            (function wireSocket() {
+                var SOCKET_URL = 'http://localhost:4000';
+                var stateEl = document.querySelector('#sockState');
+                var pillEl = document.querySelector('#sockStatus');
+
+                function paint(state) {
+                    if (stateEl) stateEl.textContent = state;
+                    if (!pillEl) return;
+                    pillEl.style.borderColor = (state === 'connected') ? '#22c55e' : '#ef4444';
+                    pillEl.style.background = (state === 'connected') ? '#22c55e22' : '#ef444422';
+                }
+                if (!window.io) {
+                    console.error('Socket.IO client not loaded');
+                    paint('no client');
+                    return;
+                }
+
+                var socket = io(SOCKET_URL, {
+                    transports: ['websocket', 'polling'],
+                    reconnection: true,
+                    reconnectionAttempts: 20,
+                    reconnectionDelay: 500,
+                    timeout: 5000
+                });
+
+                socket.on('connect', function() {
+                    console.log('socket connected', socket.id);
+                    paint('connected');
+                });
+                socket.on('connect_error', function(err) {
+                    console.error('connect_error:', (err && err.message) ? err.message : err);
+                    paint('connect error');
+                });
+                socket.on('error', function(err) {
+                    console.error('socket error:', err);
+                    paint('error');
+                });
+                socket.io.on('reconnect_attempt', function() {
+                    paint('reconnecting…');
+                });
+                socket.io.on('reconnect', function() {
+                    paint('connected');
+                });
+                socket.io.on('reconnect_failed', function() {
+                    paint('failed');
+                });
+
+                socket.on('driverLocation', function(p) {
+                    if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+                    try {
+                        myLatLng = [p.lat, p.lng];
+                        if (map) {
+                            addMarkers();
+                        }
+                    } catch (e) {
+                        console.error('driverLocation handler error:', e);
+                    }
+                });
+            })();
+
+            // expose onclick handlers
+            window.focusDonation = focusDonation;
+            window.routeTo = routeTo;
+            window.claimDonation = claimDonation;
+            window.markPicked = markPicked;
+            window.markDelivered = markDelivered;
+        });
+    </script>
+</body>
+
+</html>
